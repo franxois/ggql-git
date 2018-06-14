@@ -1,0 +1,12 @@
+type Project {
+  id: ID!
+  name: String!
+}
+
+type Query {
+  projects: [Project!]!
+}
+
+# type Mutation {
+#   createTodo(text: String!): Todo!
+# }
