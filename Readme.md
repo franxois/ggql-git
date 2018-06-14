@@ -3,10 +3,11 @@
 ## install
 
 go get -u golang.org/x/vgo
+
 vgo vendor
 
 make dev
 
-## Front
+## front
 
 https://github.com/wmonk/create-react-app-typescript
