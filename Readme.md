@@ -12,3 +12,9 @@ make dev
 ## front
 
 https://github.com/wmonk/create-react-app-typescript
+
+### Reason-apollo
+
+https://github.com/apollographql/reason-apollo
+
+send-introspection-query http://127.0.0.1:8080/query
