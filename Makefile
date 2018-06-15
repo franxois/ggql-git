@@ -1,5 +1,5 @@
 gqlgen: server/schema.graphql
-	go generate ./server/graph/graph.go
+	vgo generate ./server/graph/graph.go
 
 dev: server/main.go server/graph/*.go
-	make gqlgen && (cd server && go run main.go )
+	make gqlgen && (cd server && vgo run main.go )

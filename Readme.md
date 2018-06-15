@@ -3,6 +3,7 @@
 ## install
 
 go get -u golang.org/x/vgo
+go get -u github.com/vektah/gqlgen
 
 vgo vendor
 
