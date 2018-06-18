@@ -1,6 +1,7 @@
 type Project {
   id: ID!
   name: String!
+  currentBranch: String
 }
 
 type Query {
