@@ -22,7 +22,7 @@ func main() {
 		AllowCredentials: true,
 		AllowedHeaders:   []string{"Authorization", "Content-Type"},
 		// Enable Debugging for testing, consider disabling in production
-		Debug: true,
+		Debug: !true,
 	})
 
 	fmt.Println("Listening on :8081")

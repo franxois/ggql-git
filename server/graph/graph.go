@@ -1,4 +1,4 @@
-//go:generate gqlgen -schema schema.graphql
+//go:generate gqlgen -typemap types.json -schema schema.graphql
 package graph
 
 import (
@@ -9,6 +9,11 @@ import (
 )
 
 // see https://gqlgen.com/getting-started/
+
+type Project struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+}
 
 type MyApp struct {
 	projects []Project
@@ -33,4 +38,12 @@ func (a *MyApp) Query_projects(ctx context.Context) ([]Project, error) {
 	}
 
 	return projects, nil
+}
+
+func (a *MyApp) Project_currentBranch(ctx context.Context, obj *Project) (*string, error) {
+	s := "Ok chief"
+	return &s, nil
+}
+func (a *MyApp) Project_branches(ctx context.Context, obj *Project) ([]string, error) {
+	return []string{"OK??"}, nil
 }
