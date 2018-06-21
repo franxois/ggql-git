@@ -7,6 +7,7 @@ type Project {
 
 type Query {
   projects: [Project!]!
+  project( name: String! ): Project
 }
 
 # type Mutation {

@@ -1,4 +1,4 @@
-gqlgen: server/schema.graphql
+gqlgen: ./server/graph/schema.graphql
 	vgo generate ./server/graph/graph.go
 
 dev:
