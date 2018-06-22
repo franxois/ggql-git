@@ -1,51 +1,99 @@
 package graph
 
 import (
+	"fmt"
+	"io/ioutil"
 	"os"
 
 	git "gopkg.in/libgit2/git2go.v26"
 )
 
 type Project struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Path string `json:"-"`
+	ID   string          `json:"id"`
+	Name string          `json:"name"`
+	Path string          `json:"-"`
+	Repo *git.Repository `json:"-"`
+}
+
+func getProject(name, path string) (*Project, error) {
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		// path/to/whatever does exist
+
+		repo, err := git.OpenRepository(path)
+
+		if err != nil {
+			return nil, err
+		}
+
+		return &Project{ID: name, Name: name, Path: path, Repo: repo}, nil
+	}
+	return nil, fmt.Errorf("Project not found")
+}
+
+func getProjects(basePath string) ([]Project, error) {
+	files, err := ioutil.ReadDir(basePath)
+	if err != nil {
+		return nil, err
+	}
+
+	projects := make([]Project, 0)
+
+	for _, file := range files {
+		path := basePath + "/" + file.Name() + "/.git"
+		if project, err := getProject(file.Name(), path); err == nil {
+			projects = append(projects, *project)
+		}
+	}
+
+	return projects, nil
 }
 
 func (p Project) getCurentBranch() (*string, error) {
 
 	branchName := ""
 
-	if _, err := os.Stat(p.Path); !os.IsNotExist(err) {
-		repo, err := git.OpenRepository(p.Path)
+	branches, _ := p.Repo.NewBranchIterator(git.BranchLocal)
+
+	branches.ForEach(func(b *git.Branch, t git.BranchType) error {
+		name, err := b.Name()
 
 		if err != nil {
-			return nil, err
+			return err
 		}
 
-		branches, _ := repo.NewBranchIterator(git.BranchLocal)
+		isHead, err := b.IsHead()
 
-		branches.ForEach(func(b *git.Branch, t git.BranchType) error {
-			name, err := b.Name()
+		if err != nil {
+			return err
+		}
 
-			if err != nil {
-				return err
-			}
+		if isHead {
+			branchName = name
+		}
 
-			isHead, err := b.IsHead()
-
-			if err != nil {
-				return err
-			}
-
-			if isHead {
-				branchName = name
-			}
-
-			return nil
-		})
-
-	}
+		return nil
+	})
 
 	return &branchName, nil
+}
+
+func (p Project) getBranches() ([]string, error) {
+
+	allBranches := make([]string, 0)
+
+	branches, _ := p.Repo.NewBranchIterator(git.BranchLocal)
+
+	branches.ForEach(func(b *git.Branch, t git.BranchType) error {
+		name, err := b.Name()
+
+		if err != nil {
+			return err
+		}
+
+		allBranches = append(allBranches, name)
+
+		return nil
+	})
+
+	return allBranches, nil
 }
