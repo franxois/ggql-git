@@ -13,15 +13,17 @@ type MyApp struct {
 	projects []Project
 }
 
+var basePath string
+
+func init() {
+	basePath = fmt.Sprintf("%s/src/git.fastbooking.ch/product-techno/docker-compose-attraction/projects", os.Getenv("GOPATH"))
+}
+
 func (a *MyApp) Query_projects(ctx context.Context) ([]Project, error) {
-
-	basePath := fmt.Sprintf("%s/src/git.fastbooking.ch/product-techno/docker-compose-attraction/projects", os.Getenv("GOPATH"))
-
 	return getProjects(basePath)
 }
 
 func (a *MyApp) Query_project(ctx context.Context, name string) (*Project, error) {
-	basePath := fmt.Sprintf("%s/src/git.fastbooking.ch/product-techno/docker-compose-attraction/projects", os.Getenv("GOPATH"))
 	path := basePath + "/" + name + "/.git"
 	return getProject(name, path)
 }
