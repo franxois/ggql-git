@@ -1,0 +1,13 @@
+github.com/gorilla/websocket v1.2.0/go.mod h1:E7qHFY5m1UJ88s3WnNqhKjPHQ0heANvMoAMk2YaljkQ=
+github.com/pkg/errors v0.8.0 h1:WdK/asTD0HN+q6hsWO3/vpuAkAr+tw6aNJNDFFf0+qw=
+github.com/pkg/errors v0.8.0/go.mod h1:bwawxfHBFNV+L2hUp1rHADufV3IMtnDRdf1r5NINEl0=
+github.com/rs/cors v1.4.0/go.mod h1:gFx+x8UowdsKA9AchylcLynDq+nNFfI8FkUZdN/jGCU=
+github.com/vektah/gqlgen v0.0.0-20180618050512-a34b4de4cdf3/go.mod h1:p6RS1iWLR+HVU1U2lU6vWgLjXSBtD0hRubzDWKhXFhY=
+github.com/vektah/gqlgen v0.0.0-20180719053003-9d473f8b6585 h1:J2Flxit1J6RGRf9hKxGUOpPZUXjY0iRQhZuTDgSthbs=
+github.com/vektah/gqlgen v0.0.0-20180719053003-9d473f8b6585/go.mod h1:p6RS1iWLR+HVU1U2lU6vWgLjXSBtD0hRubzDWKhXFhY=
+golang.org/x/tools v0.0.0-20180719182600-4735f53fb37d h1:qfyrm0HIs3eLyuOORsz97APmkGTRAIyQsGC9x9WjCtk=
+golang.org/x/tools v0.0.0-20180719182600-4735f53fb37d/go.mod h1:n7NCudcB/nEzxVGmLbDWY5pfWTLqBcC2KZ6jyYvM4mQ=
+gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/libgit2/git2go.v26 v26.0.0-20180313080006-1f712c6f9608/go.mod h1:Fx2mSUbkLzBXfxYSP0L8/Iz7h0fIUJNDUYeRHFuzKH0=
+gopkg.in/yaml.v2 v2.2.1 h1:mUhvW9EsL+naU5Q3cakzfE91YhliOondGd6ZrsDBHQE=
+gopkg.in/yaml.v2 v2.2.1/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=

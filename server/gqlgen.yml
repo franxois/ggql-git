@@ -1,0 +1,8 @@
+schema: schema.graphql
+exec:
+  filename: graph/generated.go
+model:
+  filename: graph/models_gen.go
+models:
+  Project:
+    model: github.com/franxois/ggql-git/server/graph.Project

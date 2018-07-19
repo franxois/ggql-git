@@ -77,9 +77,9 @@ func (p Project) getCurentBranch() (*string, error) {
 	return &branchName, nil
 }
 
-func (p Project) getBranches() ([]string, error) {
+func (p Project) getBranches() ([]*string, error) {
 
-	allBranches := make([]string, 0)
+	allBranches := make([]*string, 0)
 
 	branches, _ := p.Repo.NewBranchIterator(git.BranchLocal)
 
@@ -90,7 +90,7 @@ func (p Project) getBranches() ([]string, error) {
 			return err
 		}
 
-		allBranches = append(allBranches, name)
+		allBranches = append(allBranches, &name)
 
 		return nil
 	})

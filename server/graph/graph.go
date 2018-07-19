@@ -1,4 +1,5 @@
-//go:generate gqlgen -typemap types.json -schema schema.graphql
+//go:generate gqlgen
+
 package graph
 
 import (
@@ -32,6 +33,6 @@ func (a *MyApp) Project_currentBranch(ctx context.Context, obj *Project) (*strin
 	branch, err := obj.getCurentBranch()
 	return branch, err
 }
-func (a *MyApp) Project_branches(ctx context.Context, obj *Project) ([]string, error) {
+func (a *MyApp) Project_branches(ctx context.Context, obj *Project) ([]*string, error) {
 	return obj.getBranches()
 }
