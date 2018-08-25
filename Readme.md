@@ -4,20 +4,23 @@
 
 ### Without go dep
 
+```
 go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg
 go get -u github.com/oxequa/realize
-
-`cd graphql && gqlgen -v`
-
+cd graphql && gqlgen -v
+```
 ### With go dep
 
-rm ~/go/bin/gqlgen
-rm -rf ~/go/src/github.com/99designs/gqlgen
-go get -u github.com/golang/dep/cmd/dep
+can't make it work ...
 
+```
+rm $GOPATH/bin/gqlgen
+rm -rf $GOPATH/src/github.com/99designs/gqlgen
+go get -u github.com/golang/dep/cmd/dep
 dep init
 dep ensure
 go generate ./...
+```
 
 ## front
 
