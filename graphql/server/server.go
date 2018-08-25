@@ -10,7 +10,7 @@ import (
 	"github.com/rs/cors"
 )
 
-const defaultPort = "8080"
+const defaultPort = "8081"
 
 func main() {
 	port := os.Getenv("PORT")
@@ -19,8 +19,8 @@ func main() {
 	}
 
 	mux := http.NewServeMux()
-	mux.Handle("/", handler.Playground("GraphQL playground", "/query"))
-	mux.Handle("/query", handler.GraphQL(graphql.NewExecutableSchema(graphql.Config{Resolvers: &graphql.Resolver{}})))
+	mux.Handle("/", handler.Playground("GraphQL playground", "/graphql"))
+	mux.Handle("/graphql", handler.GraphQL(graphql.NewExecutableSchema(graphql.Config{Resolvers: &graphql.Resolver{}})))
 
 	c := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost", "http://localhost:8080", "http://localhost:8081"},
