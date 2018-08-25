@@ -1,13 +1,17 @@
-FROM golang:1-alpine
+FROM golang:1.10-alpine3.8
+RUN apk add --no-cache git libgit2 libgit2-dev build-base
 
-ADD . /go/src/github/franxois/ggql-git/
-WORKDIR /go/src/github/franxois/ggql-git/server/
+RUN go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg
+RUN go get -u gopkg.in/libgit2/git2go.v27
+RUN go get -u github.com/gorilla/websocket github.com/rs/cors
 
-RUN apk add --no-cache git
+ADD . /go/src/github.com/franxois/ggql-git/
+WORKDIR /go/src/github.com/franxois/ggql-git/
 
-RUN go get -u github.com/vektah/gqlgen
-RUN go generate graph/graph.go
-RUN go get -u golang.org/x/vgo
-RUN vgo build
+# Change libgit2 version in go source
+RUN sed -i 's/v26/v27/g' project/project.go
 
-RUN go get -u github.com/oxequa/realize
+WORKDIR /go/src/github.com/franxois/ggql-git/graphql/server
+RUN go build
+
+ENTRYPOINT [ "/go/src/github.com/franxois/ggql-git/graphql/server/server" ]
