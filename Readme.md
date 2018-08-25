@@ -2,12 +2,22 @@
 
 ## install
 
-go get -u golang.org/x/vgo
-go get -u github.com/vektah/gqlgen
+### Without go dep
 
-vgo vendor
+go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg
+go get -u github.com/oxequa/realize
 
-make dev
+`cd graphql && gqlgen -v`
+
+### With go dep
+
+rm ~/go/bin/gqlgen
+rm -rf ~/go/src/github.com/99designs/gqlgen
+go get -u github.com/golang/dep/cmd/dep
+
+dep init
+dep ensure
+go generate ./...
 
 ## front
 
