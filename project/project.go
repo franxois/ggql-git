@@ -1,4 +1,4 @@
-package graph
+package project
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ type Project struct {
 	Repo *git.Repository `json:"-"`
 }
 
-func getProject(name, path string) (*Project, error) {
+func GetProject(name, path string) (*Project, error) {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		// path/to/whatever does exist
 
@@ -30,7 +30,7 @@ func getProject(name, path string) (*Project, error) {
 	return nil, fmt.Errorf("Project not found")
 }
 
-func getProjects(basePath string) ([]Project, error) {
+func GetProjects(basePath string) ([]Project, error) {
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
 		return nil, err
@@ -40,7 +40,7 @@ func getProjects(basePath string) ([]Project, error) {
 
 	for _, file := range files {
 		path := basePath + "/" + file.Name() + "/.git"
-		if project, err := getProject(file.Name(), path); err == nil {
+		if project, err := GetProject(file.Name(), path); err == nil {
 			projects = append(projects, *project)
 		}
 	}
@@ -48,9 +48,9 @@ func getProjects(basePath string) ([]Project, error) {
 	return projects, nil
 }
 
-func (p Project) getCurentBranch() (*string, error) {
+func (p Project) GetCurentBranch() (*string, error) {
 
-	branchName := ""
+	var branchName *string
 
 	branches, _ := p.Repo.NewBranchIterator(git.BranchLocal)
 
@@ -68,16 +68,16 @@ func (p Project) getCurentBranch() (*string, error) {
 		}
 
 		if isHead {
-			branchName = name
+			branchName = &name
 		}
 
 		return nil
 	})
 
-	return &branchName, nil
+	return branchName, nil
 }
 
-func (p Project) getBranches() ([]string, error) {
+func (p Project) GetBranches() ([]string, error) {
 
 	allBranches := make([]string, 0)
 
