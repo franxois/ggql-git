@@ -12,7 +12,7 @@
         <div v-else-if="error" class="error apollo">An error occured</div>
 
         <!-- Result -->
-        <div v-else-if="data" class="result apollo">{{ JSON.stringify( data ) }}</div>
+        <div v-else-if="data" class="result apollo"> <projecs-display :data="data"></projecs-display> </div>
 
         <!-- No result -->
         <div v-else class="no-result apollo">No result :(</div>
@@ -22,7 +22,13 @@
 </template>
 
 <script>
-export default {};
+import ProjecsDisplay from "./ProjectsList.display";
+
+export default {
+  components: {
+    "projecs-display": ProjecsDisplay
+  }
+};
 </script>
 
 <style scoped>
