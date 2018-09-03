@@ -4,9 +4,10 @@
     <ApolloQuery
       :query="require('../graphql/ProjectList.gql')"
     >
-      <template slot-scope="{ result: { loading, error, data } }">
-        <!-- Loading -->
-        <div v-if="loading" class="loading apollo">Loading...</div>
+      <template slot-scope="{ result: { error, data }, isLoading }">
+
+        <!-- isLoading -->
+        <div v-if="isLoading" class="loading apollo">Loading...</div>
 
         <!-- Error -->
         <div v-else-if="error" class="error apollo">An error occured</div>

@@ -9,7 +9,7 @@
         </tr>
       </tbody>
       </table>
-    <p>{{ JSON.stringify(data) }}</p>
+    <!-- <p>{{ JSON.stringify(data) }}</p> -->
   </div>
 </template>
 
