@@ -1,6 +1,4 @@
 node_modules
 vendor
-front-react-reason
-front-vue-apollo
-front-reason-apollo
+fronts
 Dockerfile
