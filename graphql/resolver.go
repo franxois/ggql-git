@@ -28,6 +28,9 @@ func (r *projectResolver) CurrentBranch(ctx context.Context, obj *project.Projec
 func (r *projectResolver) Branches(ctx context.Context, obj *project.Project) ([]string, error) {
 	return obj.GetBranches()
 }
+func (r *projectResolver) Tags(ctx context.Context, obj *project.Project) ([]string, error) {
+	return obj.GetTags()
+}
 
 type queryResolver struct{ *Resolver }
 

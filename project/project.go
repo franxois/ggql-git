@@ -97,3 +97,7 @@ func (p Project) GetBranches() ([]string, error) {
 
 	return allBranches, nil
 }
+
+func (p Project) GetTags() ([]string, error) {
+	return p.Repo.Tags.ListWithMatch("v*")
+}

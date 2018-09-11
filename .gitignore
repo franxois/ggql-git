@@ -5,3 +5,5 @@ server/graph/generated.go
 server/graph/models_gen.go
 
 graphql_schema.json
+
+gin-bin

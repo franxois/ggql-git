@@ -38,6 +38,7 @@ type DirectiveRoot struct {
 type ProjectResolver interface {
 	CurrentBranch(ctx context.Context, obj *project.Project) (*string, error)
 	Branches(ctx context.Context, obj *project.Project) ([]string, error)
+	Tags(ctx context.Context, obj *project.Project) ([]string, error)
 }
 type QueryResolver interface {
 	Projects(ctx context.Context) ([]project.Project, error)
@@ -117,6 +118,12 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Project_branches(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "Tags":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Project_Tags(ctx, field, obj)
 				wg.Done()
 			}(i, field)
 		default:
@@ -207,6 +214,31 @@ func (ec *executionContext) _Project_branches(ctx context.Context, field graphql
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
 		return ec.resolvers.Project().Branches(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.([]string)
+	rctx.Result = res
+	arr1 := graphql.Array{}
+	for idx1 := range res {
+		arr1 = append(arr1, func() graphql.Marshaler {
+			return graphql.MarshalString(res[idx1])
+		}())
+	}
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Project_Tags(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Project",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Project().Tags(ctx, obj)
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -1527,6 +1559,7 @@ var parsedSchema = gqlparser.MustLoadSchema(
   name: String!
   currentBranch: String
   branches: [String!]
+  Tags: [String!]
 }
 
 type Query {
