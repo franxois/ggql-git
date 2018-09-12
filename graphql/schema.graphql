@@ -2,8 +2,16 @@ type Project {
   id: ID!
   name: String!
   currentBranch: String
-  branches: [String!]
-  Tags: [String!]
+  branches: [String!]!
+  versions: [Version!]!
+  lastVersion: Version
+  lastCandidate: Version
+  lastRelease: Version
+}
+
+type Version {
+  fullVer: String!
+  isRc: Boolean!
 }
 
 type Query {

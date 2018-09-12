@@ -8,6 +8,10 @@ import (
 	git "gopkg.in/libgit2/git2go.v26"
 )
 
+// git "gopkg.in/libgit2/git2go.v24" ubuntu 16.04
+// git "gopkg.in/libgit2/git2go.v27" alpine 3.8
+// git "gopkg.in/libgit2/git2go.v26" ubuntu 18.04
+
 type Project struct {
 	ID   string          `json:"id"`
 	Name string          `json:"name"`
@@ -100,4 +104,15 @@ func (p Project) GetBranches() ([]string, error) {
 
 func (p Project) GetTags() ([]string, error) {
 	return p.Repo.Tags.ListWithMatch("v*")
+}
+
+func (p Project) GetVersions() ([]Version, error) {
+
+	tags, err := p.Repo.Tags.ListWithMatch("v*")
+
+	if err != nil {
+		return nil, err
+	}
+
+	return tagListToVersions(tags), nil
 }

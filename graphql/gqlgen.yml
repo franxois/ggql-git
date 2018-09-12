@@ -14,3 +14,5 @@ resolver:
 models:
     Project:
         model: github.com/franxois/ggql-git/project.Project
+    Version:
+        model: github.com/franxois/ggql-git/project.Version

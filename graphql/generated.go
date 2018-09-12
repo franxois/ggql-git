@@ -44,19 +44,30 @@ type ComplexityRoot struct {
 		Name          func(childComplexity int) int
 		CurrentBranch func(childComplexity int) int
 		Branches      func(childComplexity int) int
-		Tags          func(childComplexity int) int
+		Versions      func(childComplexity int) int
+		LastVersion   func(childComplexity int) int
+		LastCandidate func(childComplexity int) int
+		LastRelease   func(childComplexity int) int
 	}
 
 	Query struct {
 		Projects func(childComplexity int) int
 		Project  func(childComplexity int, name string) int
 	}
+
+	Version struct {
+		FullVer func(childComplexity int) int
+		IsRc    func(childComplexity int) int
+	}
 }
 
 type ProjectResolver interface {
 	CurrentBranch(ctx context.Context, obj *project.Project) (*string, error)
 	Branches(ctx context.Context, obj *project.Project) ([]string, error)
-	Tags(ctx context.Context, obj *project.Project) ([]string, error)
+	Versions(ctx context.Context, obj *project.Project) ([]project.Version, error)
+	LastVersion(ctx context.Context, obj *project.Project) (*project.Version, error)
+	LastCandidate(ctx context.Context, obj *project.Project) (*project.Version, error)
+	LastRelease(ctx context.Context, obj *project.Project) (*project.Version, error)
 }
 type QueryResolver interface {
 	Projects(ctx context.Context) ([]project.Project, error)
@@ -164,12 +175,33 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Project.Branches(childComplexity), true
 
-	case "Project.Tags":
-		if e.complexity.Project.Tags == nil {
+	case "Project.versions":
+		if e.complexity.Project.Versions == nil {
 			break
 		}
 
-		return e.complexity.Project.Tags(childComplexity), true
+		return e.complexity.Project.Versions(childComplexity), true
+
+	case "Project.lastVersion":
+		if e.complexity.Project.LastVersion == nil {
+			break
+		}
+
+		return e.complexity.Project.LastVersion(childComplexity), true
+
+	case "Project.lastCandidate":
+		if e.complexity.Project.LastCandidate == nil {
+			break
+		}
+
+		return e.complexity.Project.LastCandidate(childComplexity), true
+
+	case "Project.lastRelease":
+		if e.complexity.Project.LastRelease == nil {
+			break
+		}
+
+		return e.complexity.Project.LastRelease(childComplexity), true
 
 	case "Query.projects":
 		if e.complexity.Query.Projects == nil {
@@ -189,6 +221,20 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Project(childComplexity, args["name"].(string)), true
+
+	case "Version.fullVer":
+		if e.complexity.Version.FullVer == nil {
+			break
+		}
+
+		return e.complexity.Version.FullVer(childComplexity), true
+
+	case "Version.isRc":
+		if e.complexity.Version.IsRc == nil {
+			break
+		}
+
+		return e.complexity.Version.IsRc(childComplexity), true
 
 	}
 	return 0, false
@@ -258,12 +304,36 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
 				out.Values[i] = ec._Project_branches(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
 				wg.Done()
 			}(i, field)
-		case "Tags":
+		case "versions":
 			wg.Add(1)
 			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_Tags(ctx, field, obj)
+				out.Values[i] = ec._Project_versions(ctx, field, obj)
+				if out.Values[i] == graphql.Null {
+					invalid = true
+				}
+				wg.Done()
+			}(i, field)
+		case "lastVersion":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Project_lastVersion(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "lastCandidate":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Project_lastCandidate(ctx, field, obj)
+				wg.Done()
+			}(i, field)
+		case "lastRelease":
+			wg.Add(1)
+			go func(i int, field graphql.CollectedField) {
+				out.Values[i] = ec._Project_lastRelease(ctx, field, obj)
 				wg.Done()
 			}(i, field)
 		default:
@@ -356,6 +426,9 @@ func (ec *executionContext) _Project_branches(ctx context.Context, field graphql
 		return ec.resolvers.Project().Branches(ctx, obj)
 	})
 	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
 		return graphql.Null
 	}
 	res := resTmp.([]string)
@@ -373,7 +446,7 @@ func (ec *executionContext) _Project_branches(ctx context.Context, field graphql
 }
 
 // nolint: vetshadow
-func (ec *executionContext) _Project_Tags(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
+func (ec *executionContext) _Project_versions(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
 	rctx := &graphql.ResolverContext{
 		Object: "Project",
 		Args:   nil,
@@ -381,23 +454,122 @@ func (ec *executionContext) _Project_Tags(ctx context.Context, field graphql.Col
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().Tags(ctx, obj)
+		return ec.resolvers.Project().Versions(ctx, obj)
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]project.Version)
+	rctx.Result = res
+
+	arr1 := make(graphql.Array, len(res))
+	var wg sync.WaitGroup
+
+	isLen1 := len(res) == 1
+	if !isLen1 {
+		wg.Add(len(res))
+	}
+
+	for idx1 := range res {
+		idx1 := idx1
+		rctx := &graphql.ResolverContext{
+			Index:  &idx1,
+			Result: &res[idx1],
+		}
+		ctx := graphql.WithResolverContext(ctx, rctx)
+		f := func(idx1 int) {
+			if !isLen1 {
+				defer wg.Done()
+			}
+			arr1[idx1] = func() graphql.Marshaler {
+
+				return ec._Version(ctx, field.Selections, &res[idx1])
+			}()
+		}
+		if isLen1 {
+			f(idx1)
+		} else {
+			go f(idx1)
+		}
+
+	}
+	wg.Wait()
+	return arr1
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Project_lastVersion(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Project",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Project().LastVersion(ctx, obj)
 	})
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.([]string)
+	res := resTmp.(*project.Version)
 	rctx.Result = res
 
-	arr1 := make(graphql.Array, len(res))
-
-	for idx1 := range res {
-		arr1[idx1] = func() graphql.Marshaler {
-			return graphql.MarshalString(res[idx1])
-		}()
+	if res == nil {
+		return graphql.Null
 	}
 
-	return arr1
+	return ec._Version(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Project_lastCandidate(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Project",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Project().LastCandidate(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*project.Version)
+	rctx.Result = res
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Version(ctx, field.Selections, res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Project_lastRelease(ctx context.Context, field graphql.CollectedField, obj *project.Project) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Project",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return ec.resolvers.Project().LastRelease(ctx, obj)
+	})
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*project.Version)
+	rctx.Result = res
+
+	if res == nil {
+		return graphql.Null
+	}
+
+	return ec._Version(ctx, field.Selections, res)
 }
 
 var queryImplementors = []string{"Query"}
@@ -586,6 +758,85 @@ func (ec *executionContext) _Query___schema(ctx context.Context, field graphql.C
 	}
 
 	return ec.___Schema(ctx, field.Selections, res)
+}
+
+var versionImplementors = []string{"Version"}
+
+// nolint: gocyclo, errcheck, gas, goconst
+func (ec *executionContext) _Version(ctx context.Context, sel ast.SelectionSet, obj *project.Version) graphql.Marshaler {
+	fields := graphql.CollectFields(ctx, sel, versionImplementors)
+
+	out := graphql.NewOrderedMap(len(fields))
+	invalid := false
+	for i, field := range fields {
+		out.Keys[i] = field.Alias
+
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Version")
+		case "fullVer":
+			out.Values[i] = ec._Version_fullVer(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		case "isRc":
+			out.Values[i] = ec._Version_isRc(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+
+	if invalid {
+		return graphql.Null
+	}
+	return out
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Version_fullVer(ctx context.Context, field graphql.CollectedField, obj *project.Version) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Version",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.FullVer(), nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	rctx.Result = res
+	return graphql.MarshalString(res)
+}
+
+// nolint: vetshadow
+func (ec *executionContext) _Version_isRc(ctx context.Context, field graphql.CollectedField, obj *project.Version) graphql.Marshaler {
+	rctx := &graphql.ResolverContext{
+		Object: "Version",
+		Args:   nil,
+		Field:  field,
+	}
+	ctx = graphql.WithResolverContext(ctx, rctx)
+	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
+		return obj.IsRc, nil
+	})
+	if resTmp == nil {
+		if !ec.HasError(rctx) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	rctx.Result = res
+	return graphql.MarshalBoolean(res)
 }
 
 var __DirectiveImplementors = []string{"__Directive"}
@@ -1893,8 +2144,16 @@ var parsedSchema = gqlparser.MustLoadSchema(
   id: ID!
   name: String!
   currentBranch: String
-  branches: [String!]
-  Tags: [String!]
+  branches: [String!]!
+  versions: [Version!]!
+  lastVersion: Version
+  lastCandidate: Version
+  lastRelease: Version
+}
+
+type Version {
+  fullVer: String!
+  isRc: Boolean!
 }
 
 type Query {

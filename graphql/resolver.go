@@ -28,8 +28,54 @@ func (r *projectResolver) CurrentBranch(ctx context.Context, obj *project.Projec
 func (r *projectResolver) Branches(ctx context.Context, obj *project.Project) ([]string, error) {
 	return obj.GetBranches()
 }
-func (r *projectResolver) Tags(ctx context.Context, obj *project.Project) ([]string, error) {
-	return obj.GetTags()
+func (r *projectResolver) Versions(ctx context.Context, obj *project.Project) ([]project.Version, error) {
+	return obj.GetVersions()
+}
+
+func (r *projectResolver) LastCandidate(ctx context.Context, obj *project.Project) (*project.Version, error) {
+	versions, err := obj.GetVersions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := len(versions) - 1; i >= 0; i-- {
+		v := versions[i]
+		if v.IsRc {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+func (r *projectResolver) LastRelease(ctx context.Context, obj *project.Project) (*project.Version, error) {
+	versions, err := obj.GetVersions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := len(versions) - 1; i >= 0; i-- {
+		v := versions[i]
+		if !v.IsRc {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+func (r *projectResolver) LastVersion(ctx context.Context, obj *project.Project) (*project.Version, error) {
+	versions, err := obj.GetVersions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(versions) == 0 {
+		return nil, nil // no version available
+	}
+
+	return &versions[len(versions)-1], nil
 }
 
 type queryResolver struct{ *Resolver }
