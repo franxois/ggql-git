@@ -10,7 +10,8 @@ ADD . /go/src/github.com/franxois/ggql-git/
 WORKDIR /go/src/github.com/franxois/ggql-git/
 
 # Change libgit2 version in go source
-RUN sed -i 's/v26/v27/g' project/project.go
+RUN sed -i -E "s/git2go\.v[0-9]+/git2go\.v27/g" project/project.go
+RUN sed -i -E "s/git2go\.v[0-9]+/git2go\.v27/g" project/project_test.go
 
 WORKDIR /go/src/github.com/franxois/ggql-git/graphql/server
 RUN gqlgen -v
