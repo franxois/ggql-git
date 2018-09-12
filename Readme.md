@@ -5,9 +5,12 @@
 ### Without go dep
 
 ```
-go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg
+go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg github.com/hashicorp/golang-lru
 go get -u github.com/oxequa/realize
 cd graphql && gqlgen -v
+
+#To run
+realize start
 ```
 ### With go dep
 

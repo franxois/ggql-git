@@ -1,0 +1,21 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+schema:
+- name: server
+  path: graphql/server
+  commands:
+    run:
+      status: true
+  watcher:
+    extensions:
+    - go
+    paths:
+    - /
+    - ./../
+    - ./../../project
+    ignored_paths:
+    - .git
+    - .realize
+    - vendor
