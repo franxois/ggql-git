@@ -31,7 +31,6 @@ type Config struct {
 }
 
 type ResolverRoot interface {
-	Project() ProjectResolver
 	Query() QueryResolver
 }
 
@@ -61,14 +60,6 @@ type ComplexityRoot struct {
 	}
 }
 
-type ProjectResolver interface {
-	CurrentBranch(ctx context.Context, obj *project.Project) (*string, error)
-	Branches(ctx context.Context, obj *project.Project) ([]string, error)
-	Versions(ctx context.Context, obj *project.Project) ([]project.Version, error)
-	LastVersion(ctx context.Context, obj *project.Project) (*project.Version, error)
-	LastCandidate(ctx context.Context, obj *project.Project) (*project.Version, error)
-	LastRelease(ctx context.Context, obj *project.Project) (*project.Version, error)
-}
 type QueryResolver interface {
 	Projects(ctx context.Context) ([]project.Project, error)
 	Project(ctx context.Context, name string) (*project.Project, error)
@@ -275,7 +266,6 @@ var projectImplementors = []string{"Project"}
 func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, obj *project.Project) graphql.Marshaler {
 	fields := graphql.CollectFields(ctx, sel, projectImplementors)
 
-	var wg sync.WaitGroup
 	out := graphql.NewOrderedMap(len(fields))
 	invalid := false
 	for i, field := range fields {
@@ -295,52 +285,28 @@ func (ec *executionContext) _Project(ctx context.Context, sel ast.SelectionSet, 
 				invalid = true
 			}
 		case "currentBranch":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_currentBranch(ctx, field, obj)
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_currentBranch(ctx, field, obj)
 		case "branches":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_branches(ctx, field, obj)
-				if out.Values[i] == graphql.Null {
-					invalid = true
-				}
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_branches(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "versions":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_versions(ctx, field, obj)
-				if out.Values[i] == graphql.Null {
-					invalid = true
-				}
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_versions(ctx, field, obj)
+			if out.Values[i] == graphql.Null {
+				invalid = true
+			}
 		case "lastVersion":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_lastVersion(ctx, field, obj)
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_lastVersion(ctx, field, obj)
 		case "lastCandidate":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_lastCandidate(ctx, field, obj)
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_lastCandidate(ctx, field, obj)
 		case "lastRelease":
-			wg.Add(1)
-			go func(i int, field graphql.CollectedField) {
-				out.Values[i] = ec._Project_lastRelease(ctx, field, obj)
-				wg.Done()
-			}(i, field)
+			out.Values[i] = ec._Project_lastRelease(ctx, field, obj)
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
 	}
-	wg.Wait()
+
 	if invalid {
 		return graphql.Null
 	}
@@ -400,7 +366,7 @@ func (ec *executionContext) _Project_currentBranch(ctx context.Context, field gr
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().CurrentBranch(ctx, obj)
+		return obj.CurrentBranch()
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -423,7 +389,7 @@ func (ec *executionContext) _Project_branches(ctx context.Context, field graphql
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().Branches(ctx, obj)
+		return obj.Branches()
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -454,7 +420,7 @@ func (ec *executionContext) _Project_versions(ctx context.Context, field graphql
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().Versions(ctx, obj)
+		return obj.Versions()
 	})
 	if resTmp == nil {
 		if !ec.HasError(rctx) {
@@ -509,7 +475,7 @@ func (ec *executionContext) _Project_lastVersion(ctx context.Context, field grap
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().LastVersion(ctx, obj)
+		return obj.LastVersion()
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -533,7 +499,7 @@ func (ec *executionContext) _Project_lastCandidate(ctx context.Context, field gr
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().LastCandidate(ctx, obj)
+		return obj.LastCandidate()
 	})
 	if resTmp == nil {
 		return graphql.Null
@@ -557,7 +523,7 @@ func (ec *executionContext) _Project_lastRelease(ctx context.Context, field grap
 	}
 	ctx = graphql.WithResolverContext(ctx, rctx)
 	resTmp := ec.FieldMiddleware(ctx, obj, func(ctx context.Context) (interface{}, error) {
-		return ec.resolvers.Project().LastRelease(ctx, obj)
+		return obj.LastRelease()
 	})
 	if resTmp == nil {
 		return graphql.Null

@@ -52,7 +52,7 @@ func GetProjects(basePath string) ([]Project, error) {
 	return projects, nil
 }
 
-func (p Project) GetCurentBranch() (*string, error) {
+func (p Project) CurrentBranch() (*string, error) {
 
 	var branchName *string
 
@@ -81,7 +81,7 @@ func (p Project) GetCurentBranch() (*string, error) {
 	return branchName, nil
 }
 
-func (p Project) GetBranches() ([]string, error) {
+func (p Project) Branches() ([]string, error) {
 
 	allBranches := make([]string, 0)
 
@@ -106,7 +106,7 @@ func (p Project) GetTags() ([]string, error) {
 	return p.Repo.Tags.ListWithMatch("v*")
 }
 
-func (p Project) GetVersions() ([]Version, error) {
+func (p Project) Versions() ([]Version, error) {
 
 	tags, err := p.Repo.Tags.ListWithMatch("v*")
 
@@ -115,4 +115,50 @@ func (p Project) GetVersions() ([]Version, error) {
 	}
 
 	return tagListToVersions(tags), nil
+}
+
+func (p Project) LastCandidate() (*Version, error) {
+	versions, err := p.Versions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := len(versions) - 1; i >= 0; i-- {
+		v := versions[i]
+		if v.IsRc {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+func (p Project) LastRelease() (*Version, error) {
+	versions, err := p.Versions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	for i := len(versions) - 1; i >= 0; i-- {
+		v := versions[i]
+		if !v.IsRc {
+			return &v, nil
+		}
+	}
+
+	return nil, nil
+}
+func (p Project) LastVersion() (*Version, error) {
+	versions, err := p.Versions()
+
+	if err != nil {
+		return nil, err
+	}
+
+	if len(versions) == 0 {
+		return nil, nil // no version available
+	}
+
+	return &versions[len(versions)-1], nil
 }
