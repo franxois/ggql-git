@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/user"
+	"sync"
 
 	git "gopkg.in/libgit2/git2go.v24"
 )
@@ -14,6 +15,7 @@ import (
 // git "gopkg.in/libgit2/git2go.v27" alpine 3.8
 // git "gopkg.in/libgit2/git2go.v26" ubuntu 18.04
 
+// Project contains project informations
 type Project struct {
 	ID   string          `json:"id"`
 	Name string          `json:"name"`
@@ -21,6 +23,7 @@ type Project struct {
 	Repo *git.Repository `json:"-"`
 }
 
+// GetProject get a project from a path
 func GetProject(name, path string) (*Project, error) {
 	if _, err := os.Stat(path); !os.IsNotExist(err) {
 		// path/to/whatever does exist
@@ -36,7 +39,11 @@ func GetProject(name, path string) (*Project, error) {
 	return nil, fmt.Errorf("Project not found")
 }
 
-func GetProjects(basePath string) ([]Project, error) {
+// List of projects
+type List []Project
+
+// GetProjects get a list of projects
+func GetProjects(basePath string) (List, error) {
 	files, err := ioutil.ReadDir(basePath)
 	if err != nil {
 		return nil, err
@@ -54,6 +61,7 @@ func GetProjects(basePath string) ([]Project, error) {
 	return projects, nil
 }
 
+// CurrentBranch returns current git branch
 func (p Project) CurrentBranch() (*string, error) {
 
 	var branchName *string
@@ -83,6 +91,7 @@ func (p Project) CurrentBranch() (*string, error) {
 	return branchName, nil
 }
 
+// Branches return list of git branches
 func (p Project) Branches() ([]string, error) {
 
 	allBranches := make([]string, 0)
@@ -104,10 +113,11 @@ func (p Project) Branches() ([]string, error) {
 	return allBranches, nil
 }
 
-func (p Project) GetTags() ([]string, error) {
-	return p.Repo.Tags.ListWithMatch("v*")
-}
+// func (p Project) GetTags() ([]string, error) {
+// 	return p.Repo.Tags.ListWithMatch("v*")
+// }
 
+// GitFetch runs git fetch
 func (p Project) GitFetch() error {
 
 	repo := p.Repo
@@ -133,6 +143,98 @@ func (p Project) GitFetch() error {
 	return nil
 }
 
+// GitFastForward try to fast forward local develop with remote
+func (p Project) GitFastForward() error {
+
+	repo := p.Repo
+
+	branchName, _ := p.CurrentBranch()
+
+	fmt.Printf("%+v branch name : %s \n", p.Name, *branchName)
+
+	if *branchName == "develop" {
+
+		// Get remote develop
+		remoteBranch, err := repo.References.Lookup("refs/remotes/origin/" + *branchName)
+		if err != nil {
+			return err
+		}
+
+		remoteBranchID := remoteBranch.Target()
+
+		annotatedCommit, err := repo.AnnotatedCommitFromRef(remoteBranch)
+		if err != nil {
+			return err
+		}
+
+		analysis, _, err := repo.MergeAnalysis([]*git.AnnotatedCommit{annotatedCommit})
+		if err != nil {
+			return err
+		}
+
+		if analysis&git.MergeAnalysisUpToDate != 0 {
+			fmt.Printf("%+v local develop up-to-date with remote\n", p.Name)
+		} else if analysis&git.MergeAnalysisFastForward != 0 {
+
+			branchRef, err := repo.References.Lookup("refs/heads/develop")
+			if err != nil {
+				fmt.Printf("Unable to find local develop branch ??%+v", err)
+				return fmt.Errorf("Unable to find local develop branch ??%+v", err)
+			}
+
+			head, _ := p.Repo.Head()
+
+			fmt.Printf("We can go fast forward %+v between %+v , %+v and %+v\n",
+				p.Name,
+				branchRef.Target(),
+				remoteBranchID,
+				head.Target())
+
+			// Point branch to the object
+			if _, err := branchRef.SetTarget(remoteBranch.Target(), ""); err != nil {
+				fmt.Printf("Error when seting target on develop %+v \n", err)
+			}
+			if _, err := head.SetTarget(remoteBranch.Target(), ""); err != nil {
+				fmt.Printf("Error when seting target on head %+v \n", err)
+			}
+		}
+	}
+
+	return nil
+}
+
+// GitUpdate runs in parallel fetch and forward
+func (projects List) GitUpdate() error {
+
+	var wg sync.WaitGroup
+
+	projectsJobs := make(chan Project, len(projects))
+	wg.Add(len(projects))
+
+	for _, project := range projects {
+		projectsJobs <- project
+	}
+
+	nbMaxConnections := 4
+
+	for i := 0; i < nbMaxConnections; i++ {
+		go func() {
+
+			for project := range projectsJobs {
+				project.GitFetch()
+				project.GitFastForward()
+				wg.Done()
+			}
+		}()
+	}
+
+	wg.Wait()
+	close(projectsJobs)
+
+	return nil
+}
+
+// Versions return list of all tag versions at semver format
 func (p Project) Versions() ([]Version, error) {
 
 	tags, err := p.Repo.Tags.ListWithMatch("v*")
@@ -144,6 +246,7 @@ func (p Project) Versions() ([]Version, error) {
 	return tagListToVersions(tags), nil
 }
 
+// LastCandidate returns last candidate version at semver format
 func (p Project) LastCandidate() (*Version, error) {
 	versions, err := p.Versions()
 
@@ -160,6 +263,8 @@ func (p Project) LastCandidate() (*Version, error) {
 
 	return nil, nil
 }
+
+// LastRelease returns last version at semver format
 func (p Project) LastRelease() (*Version, error) {
 	versions, err := p.Versions()
 
@@ -176,6 +281,8 @@ func (p Project) LastRelease() (*Version, error) {
 
 	return nil, nil
 }
+
+// LastVersion returns last version at semver format
 func (p Project) LastVersion() (*Version, error) {
 	versions, err := p.Versions()
 
