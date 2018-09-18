@@ -3,9 +3,11 @@ package project
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"os"
+	"os/user"
 
-	git "gopkg.in/libgit2/git2go.v26"
+	git "gopkg.in/libgit2/git2go.v24"
 )
 
 // git "gopkg.in/libgit2/git2go.v24" ubuntu 16.04
@@ -106,6 +108,31 @@ func (p Project) GetTags() ([]string, error) {
 	return p.Repo.Tags.ListWithMatch("v*")
 }
 
+func (p Project) GitFetch() error {
+
+	repo := p.Repo
+
+	// Locate remote
+	remote, err := repo.Remotes.Lookup("origin")
+	if err != nil {
+		return err
+	}
+
+	gitFetchOption := &git.FetchOptions{
+		RemoteCallbacks: git.RemoteCallbacks{
+			CredentialsCallback:      credentialsCallback,
+			CertificateCheckCallback: certificateCheckCallback,
+		},
+	}
+
+	// Fetch changes from remote
+	if err := remote.Fetch([]string{}, gitFetchOption, ""); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (p Project) Versions() ([]Version, error) {
 
 	tags, err := p.Repo.Tags.ListWithMatch("v*")
@@ -161,4 +188,20 @@ func (p Project) LastVersion() (*Version, error) {
 	}
 
 	return &versions[len(versions)-1], nil
+}
+
+func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
+
+	usr, err := user.Current()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	ret, cred := git.NewCredSshKey("git", usr.HomeDir+"/.ssh/id_rsa.pub", usr.HomeDir+"/.ssh/id_rsa", "")
+	return git.ErrorCode(ret), &cred
+}
+
+// Made this one just return 0 during troubleshooting...
+func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string) git.ErrorCode {
+	return 0
 }

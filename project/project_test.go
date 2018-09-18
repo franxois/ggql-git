@@ -2,30 +2,12 @@ package project
 
 import (
 	"fmt"
-	"log"
 	"os"
-	"os/user"
 	"sync"
 	"testing"
 
-	git "gopkg.in/libgit2/git2go.v26"
+	git "gopkg.in/libgit2/git2go.v24"
 )
-
-func credentialsCallback(url string, username string, allowedTypes git.CredType) (git.ErrorCode, *git.Cred) {
-
-	usr, err := user.Current()
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	ret, cred := git.NewCredSshKey("git", usr.HomeDir+"/.ssh/id_rsa.pub", usr.HomeDir+"/.ssh/id_rsa", "")
-	return git.ErrorCode(ret), &cred
-}
-
-// Made this one just return 0 during troubleshooting...
-func certificateCheckCallback(cert *git.Certificate, valid bool, hostname string) git.ErrorCode {
-	return 0
-}
 
 func TestPlayWithRepo(t *testing.T) {
 
@@ -64,12 +46,6 @@ func TestPlayWithLocalRepo(t *testing.T) {
 
 	projects, _ := GetProjects(basePath)
 
-	gitFetchOption := &git.FetchOptions{
-		RemoteCallbacks: git.RemoteCallbacks{
-			CredentialsCallback:      credentialsCallback,
-			CertificateCheckCallback: certificateCheckCallback,
-		}}
-
 	var wg sync.WaitGroup
 
 	projectsJobs := make(chan Project, len(projects))
@@ -87,6 +63,9 @@ func TestPlayWithLocalRepo(t *testing.T) {
 			for project := range projectsJobs {
 
 				fmt.Printf("%+v begin\n", project.Name)
+
+				project.GitFetch()
+
 				repo := project.Repo
 
 				branchName, _ := project.CurrentBranch()
@@ -94,19 +73,6 @@ func TestPlayWithLocalRepo(t *testing.T) {
 				fmt.Printf("%+v branch name : %s \n", project.Name, *branchName)
 
 				if *branchName == "develop" {
-
-					// Locate remote
-					remote, err := repo.Remotes.Lookup("origin")
-					if err != nil {
-						t.Fatalf("%+v", err)
-					}
-
-					// Fetch changes from remote
-					if err := remote.Fetch([]string{}, gitFetchOption, ""); err != nil {
-						t.Fatalf("%+v", err)
-					}
-
-					fmt.Printf("%+v fetched\n", project.Name)
 
 					// Get remote develop
 					remoteBranch, err := repo.References.Lookup("refs/remotes/origin/" + *branchName)
@@ -132,8 +98,6 @@ func TestPlayWithLocalRepo(t *testing.T) {
 						fmt.Printf("%+v remote nothing to merge ? %+v\n", project.Name, analysis&git.MergeAnalysisUpToDate)
 					} else if analysis&git.MergeAnalysisFastForward != 0 {
 
-						fmt.Printf("Going fast forward %+v\n", project.Name)
-
 						branchRef, err := repo.References.Lookup("refs/heads/develop")
 						if err != nil {
 							fmt.Printf("Unable to find local develop branch ??%+v", err)
@@ -142,32 +106,20 @@ func TestPlayWithLocalRepo(t *testing.T) {
 
 						head, _ := project.Repo.Head()
 
+						fmt.Printf("We can go fast forward %+v between %+v , %+v and %+v\n",
+							project.Name,
+							branchRef.Target(),
+							remoteBranchID,
+							head.Target())
+
 						// Point branch to the object
-						branchRef.SetTarget(remoteBranchID, "")
-						if _, err := head.SetTarget(remoteBranchID, ""); err != nil {
-							fmt.Printf("%+v", err)
-							t.Fatalf("%+v", err)
+						if _, err := branchRef.SetTarget(remoteBranch.Target(), ""); err != nil {
+							fmt.Printf("Error when seting target on develop %+v \n", err)
 						}
-
+						if _, err := head.SetTarget(remoteBranch.Target(), ""); err != nil {
+							fmt.Printf("Error when seting target on head %+v \n", err)
+						}
 					}
-					// else if analysis&git.MergeAnalysisNormal != 0 {
-					// 	fmt.Printf("%+v remote we could merge ? %+v\n", project.Name, analysis&git.MergeAnalysisNormal)
-
-					// 	if err := repo.Merge([]*git.AnnotatedCommit{annotatedCommit}, nil, nil); err != nil {
-					// 		t.Fatalf("%+v", err)
-					// 	}
-
-					// 	fmt.Printf("%+v remote we merged %+v\n", project.Name, analysis&git.MergeAnalysisNormal)
-
-					// 	// Check for conflicts
-					// 	index, err := repo.Index()
-					// 	if err != nil {
-					// 		t.Fatalf("%+v", err)
-					// 	}
-					// 	if index.HasConflicts() {
-					// 		t.Fatalf("Conflicts encountered with %s. Please resolve them.", project.Name)
-					// 	}
-					// }
 				}
 
 				fmt.Printf("%+v exit\n", project.Name)
