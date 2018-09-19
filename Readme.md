@@ -7,6 +7,7 @@
 ```
 go get -u github.com/99designs/gqlgen github.com/vektah/gorunpkg github.com/hashicorp/golang-lru
 go get -u github.com/oxequa/realize
+go get -u github.com/spf13/cobra/cobra
 cd graphql && gqlgen -v
 
 #To run

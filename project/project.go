@@ -182,20 +182,15 @@ func (p Project) GitFastForward() error {
 				return fmt.Errorf("Unable to find local develop branch ??%+v", err)
 			}
 
-			head, _ := p.Repo.Head()
-
-			fmt.Printf("We can go fast forward %+v between %+v , %+v and %+v\n",
+			fmt.Printf("We can go fast forward %+v between from %+v to %+v \n",
 				p.Name,
 				branchRef.Target(),
 				remoteBranchID,
-				head.Target())
+			)
 
 			// Point branch to the object
 			if _, err := branchRef.SetTarget(remoteBranch.Target(), ""); err != nil {
 				fmt.Printf("Error when seting target on develop %+v \n", err)
-			}
-			if _, err := head.SetTarget(remoteBranch.Target(), ""); err != nil {
-				fmt.Printf("Error when seting target on head %+v \n", err)
 			}
 		}
 	}

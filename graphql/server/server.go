@@ -1,4 +1,4 @@
-package main
+package server
 
 import (
 	"log"
@@ -12,7 +12,8 @@ import (
 
 const defaultPort = "8081"
 
-func main() {
+// Serve runs graphql server
+func Serve() {
 	port := os.Getenv("PORT")
 	if port == "" {
 		port = defaultPort
@@ -32,4 +33,8 @@ func main() {
 
 	log.Printf("connect to http://localhost:%s/ for GraphQL playground", port)
 	log.Fatal(http.ListenAndServe(":"+port, c.Handler(mux)))
+}
+
+func main() {
+	Serve()
 }
